@@ -16,7 +16,7 @@ from django.utils import timezone
 
 from .models import Category, Post, Comment
 
-from .forms import CommentForm, CreationForm, PostForm, UserEditForm
+from .forms import CommentForm, PostForm, UserEditForm
 
 POSTS_ON_PAGE = 5
 
