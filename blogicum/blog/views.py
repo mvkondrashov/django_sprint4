@@ -2,7 +2,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.paginator import Paginator
-from django.db.models import Count
+from django.db.models import Count, Q
+from django.db.models.query import QuerySet
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic import (
     CreateView,
@@ -16,7 +17,7 @@ from django.utils import timezone
 
 from .models import Category, Post, Comment
 
-from .forms import CommentForm, CreationForm, PostForm
+from .forms import CommentForm, CreationForm, PostForm, UserEditForm
 
 POSTS_ON_PAGE = 5
 
@@ -51,7 +52,7 @@ def edit_post(request, post_id):
     if not request.user.is_authenticated:
         return redirect('blog:post_detail', post_id=post_id)
 
-    instance = get_object_or_404(Post, id=post_id, author=request.user)
+    instance = get_object_or_404(Post, id=post_id)
     if instance.author != request.user:
         return redirect('blog:post_detail', post_id=post_id)
 
@@ -97,7 +98,7 @@ def profile_user(request, username):
 
 @login_required
 def edit_profile(request):
-    form = CreationForm(request.POST or None, instance=request.user)
+    form = UserEditForm(request.POST or None, instance=request.user)
     context = {'form': form}
     if form.is_valid():
         form.save()
@@ -187,6 +188,16 @@ class PostDetailView(DetailView):
 
         return context
 
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            return super().get_queryset().filter(
+                Q(is_published=True) | Q(author=self.request.user),
+            )
+        else:
+            return super().get_queryset().filter(
+                Q(is_published=True),
+            )
+
 
 class PostListView(ListView):
     model = Post
@@ -196,7 +207,7 @@ class PostListView(ListView):
 
     def get_queryset(self):
         return super().get_queryset().filter(
-            category__is_published=True,
             is_published=True,
+            category__is_published=True,
             pub_date__lte=timezone.now()
         ).annotate(comment_count=Count('comments'))
