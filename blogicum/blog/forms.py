@@ -1,7 +1,7 @@
-from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm
 from django import forms
-from .models import Post, Comment
+from django.contrib.auth import get_user_model
+
+from .models import Comment, Post
 
 User = get_user_model()
 
@@ -10,12 +10,12 @@ class PostForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        fields = (
-            'is_published', 'title', 'text', 'pub_date',
-            'location', 'category', 'image',
-        )
+        exclude = 'author',
         widgets = {
-            'pub_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'pub_date': forms.DateTimeInput(
+                attrs={'type': 'datetime-local'},
+                format='%Y-%m-%d %H:%M',  # не работает, не понимаю причины
+            )
         }
 
 
@@ -24,13 +24,6 @@ class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ('text',)
-
-
-class CreationForm(UserCreationForm):
-
-    class Meta:
-        model = User
-        fields = ('first_name', 'last_name', 'username', 'email')
 
 
 class UserEditForm(forms.ModelForm):
