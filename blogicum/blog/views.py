@@ -2,7 +2,6 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.db.models.base import Model as Model
 from django.db.models import Q
 from django.urls import reverse_lazy, reverse
 from django.conf import settings
