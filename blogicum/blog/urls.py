@@ -34,7 +34,7 @@ profile_urls = [
         name='edit_profile'
     ),
     path(
-        '<slug:username>/',
+        '<str:username>/',
         views.profile_user,
         name='profile'
     ),

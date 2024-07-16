@@ -1,9 +1,9 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
-from django.urls import reverse_lazy, reverse
+from django.urls import reverse_lazy
 from django.conf import settings
 from django.utils import timezone
 from django.views.generic import (
@@ -14,11 +14,15 @@ from django.views.generic import (
     UpdateView,
 )
 
+from .query_utils import general_request
+
+from .pages import pagination
+
 from .forms import CommentForm, PostForm, UserEditForm
 
-from .models import Category, Post, Comment
+from .models import Category, Post
 
-from .utils import general_request, pagination
+from .mixins import CommentMixin, OnlyAuthorMixin
 
 User = get_user_model()
 
@@ -37,9 +41,9 @@ def add_comment(request, post_id):
     return redirect('blog:post_detail', post_id=post_id)
 
 
+@login_required
 def edit_post(request, post_id):
-    # по ТЗ неавторизованные пользователи должны перенаправляться на страницу
-    # просмотра поста, не понял как это сделать с декоратором
+
     if not request.user.is_authenticated:
         return redirect('blog:post_detail', post_id=post_id)
 
@@ -77,19 +81,11 @@ def category_posts(request, category_slug):
 
 def profile_user(request, username):
     author = get_object_or_404(User, username=username)
-    # 2 варианта кверисета 1 для пользователя профиля 2 для всех остальных
-    if author == request.user:
-        posts = general_request(
-            model_manager=request.user.posts,
-            hidden_post=False,
-            comments=True
-        )
-    else:
-        posts = general_request(
-            model_manager=author.posts,
-            hidden_post=True,
-            comments=True
-        )
+    posts = general_request(
+        model_manager=author.posts,
+        hidden_post=(author != request.user),
+        comments=True
+    )
 
     page_obj = pagination(request, posts, settings.POSTS_ON_PAGE)
     context = {'profile': get_object_or_404(User, username=username)}
@@ -108,42 +104,6 @@ def edit_profile(request):
         return redirect('blog:profile', request.user)
 
     return render(request, 'blog/user.html', context)
-
-
-class OnlyAuthorMixin(UserPassesTestMixin):
-
-    def test_func(self):
-        object = self.get_object()
-
-        return object.author == self.request.user
-
-    def handle_no_permission(self):
-
-        return redirect(
-            'blog:post_detail',
-            post_id=self.kwargs['post_id']
-        )
-
-
-class CommentMixin:
-    model = Comment
-    pk_url_kwarg = 'comment_id'
-    template_name = 'blog/comment.html'
-
-    def get_object(self, queryset=None):
-
-        return get_object_or_404(
-            Comment,
-            id=self.kwargs['comment_id'],
-            post=self.kwargs['post_id'],
-        )
-
-    def get_success_url(self):
-
-        return reverse(
-            'blog:post_detail',
-            kwargs={'post_id': self.kwargs['post_id']}
-        )
 
 
 class CommentUpdateView(OnlyAuthorMixin, CommentMixin, UpdateView):
