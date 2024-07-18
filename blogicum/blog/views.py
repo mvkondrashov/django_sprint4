@@ -14,15 +14,11 @@ from django.views.generic import (
     UpdateView,
 )
 
-from .query_utils import general_request
-
-from .pages import pagination
-
 from .forms import CommentForm, PostForm, UserEditForm
-
-from .models import Category, Post
-
 from .mixins import CommentMixin, OnlyAuthorMixin
+from .models import Category, Post
+from .query_utils import general_request
+from .pagination import pagination
 
 User = get_user_model()
 

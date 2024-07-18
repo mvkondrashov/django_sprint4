@@ -11,11 +11,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-f1)p*91yy&4dd7n#4enq+fu%nmu+5t6ee4+gatmmc+c$%ja89)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
+    'www.molodoi.pythonanywhere.com',
+    'molodoi.pythonanywhere.com',
 ]
 
 INTERNAL_IPS = [
